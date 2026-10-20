@@ -1,0 +1,7 @@
+# dsh-system-trust
+# 让 DeepSeek Harness 的 Node TLS 连接信任操作系统根证书。
+# 用于解决卡巴斯基 / ESET / Zscaler / 企业代理等 HTTPS 监控软件替换证书导致的
+# "DeepSeek Messages request failed (502)" 或 fetch failed 问题。
+- insert:
+    - id: system-trust
+      name: dsh-system-trust
