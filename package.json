@@ -1,0 +1,30 @@
+{
+  "name": "dsh-system-trust",
+  "version": "0.1.0",
+  "description": "Make DeepSeek Harness trust the OS certificate store, so HTTPS-inspecting antivirus/proxies (Kaspersky, ESET, Zscaler, corporate MITM) stop breaking DeepSeek requests with 502/certificate errors.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "tls",
+    "certificate",
+    "kaspersky",
+    "mitm",
+    "system-ca"
+  ],
+  "license": "MIT"
+}
