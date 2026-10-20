@@ -17,10 +17,9 @@ self-signed certificate in certificate chain
 
 DSH 启动时，本插件：
 
-1. 用严格校验连接 `api.deepseek.com`，判断当前 Node 进程是否信任对方证书；
-2. 如果失败，读取**操作系统的根证书存储**（Windows：`Cert:\LocalMachine\Root` + `Cert:\CurrentUser\Root`；macOS：`security find-certificate`；Linux：系统 CA bundle）；
-3. 把这些根证书合并进 Node 的默认信任库（Node 24 用 `tls.setDefaultCACertificates`，旧版本 patch `tls.createSecureContext`）；
-4. 再次校验，并把结果写到 `~/.dsh/system-trust-status.json`。
+1. 读取**操作系统的根证书存储**（Windows：`Cert:\LocalMachine\Root` + `Cert:\CurrentUser\Root`；macOS：`security find-certificate`；Linux：系统 CA bundle）；
+2. 把这些根证书**无条件**合并进 Node 的默认信任库（Node 24 用 `tls.setDefaultCACertificates`，旧版本 patch `tls.createSecureContext`）——因为安全软件可能在任何时刻开始/停止拦截，不能等探测失败再修；
+3. 用严格校验连接 `api.deepseek.com`，把结果写到 `~/.dsh/system-trust-status.json`；之后每 5 分钟复查一次并更新状态。
 
 之后 DSH 里所有走 Node TLS 的请求（模型 API、插件下载等）都会信任系统根证书，包括安全软件的中间人证书。
 
