@@ -131,37 +131,30 @@ function installExtraRoots(pems) {
 let everInstalled = false
 
 async function main(logger) {
-  try {
-    await probeStrict(PROBE_HOST)
-    logger?.info?.(`[system-trust] ${PROBE_HOST} TLS trusted with Node default roots — no change needed`)
-    if (!everInstalled) writeStatus({ ok: true, action: 'none', host: PROBE_HOST })
-    return
-  } catch (error) {
-    logger?.warn?.(`[system-trust] strict TLS probe failed (${error.message}) — installing OS root CA store`)
-  }
-
+  // Always merge the OS root store into Node's trust list. HTTPS-inspecting
+  // software can start or stop at any time, so waiting for a failed probe is
+  // not enough: inject up front and let the probe only report the outcome.
   let roots = []
   try {
     roots = readSystemRoots(logger)
   } catch (error) {
     logger?.warn?.(`[system-trust] failed to read the OS root store: ${error.message}`)
   }
-  if (roots.length === 0) {
+  let total = defaultCAs().length
+  if (roots.length > 0) {
+    total = installExtraRoots(roots)
+    everInstalled = true
+    logger?.info?.(`[system-trust] merged ${roots.length} OS root CA(s); default trust store now has ${total} CA(s)`)
+  } else {
     logger?.warn?.('[system-trust] no OS roots available; TLS trust unchanged')
-    writeStatus({ ok: false, action: 'none', error: 'no OS roots available' })
-    return
   }
-
-  everInstalled = true
-  const total = installExtraRoots(roots)
-  logger?.info?.(`[system-trust] added ${roots.length} OS root CA(s); default trust store now has ${total} CA(s)`)
 
   try {
     await probeStrict(PROBE_HOST)
-    logger?.info?.(`[system-trust] ${PROBE_HOST} is trusted after adding the OS roots`)
-    writeStatus({ ok: true, action: 'installed', roots: roots.length, total, host: PROBE_HOST })
+    logger?.info?.(`[system-trust] ${PROBE_HOST} TLS OK`)
+    writeStatus({ ok: true, action: everInstalled ? 'installed' : 'none', roots: roots.length, total, host: PROBE_HOST })
   } catch (error) {
-    logger?.warn?.(`[system-trust] ${PROBE_HOST} still fails after adding the OS roots: ${error.message}`)
+    logger?.warn?.(`[system-trust] ${PROBE_HOST} still fails after merging OS roots: ${error.message}`)
     writeStatus({ ok: false, action: 'installed', roots: roots.length, total, error: error.message })
   }
 }
